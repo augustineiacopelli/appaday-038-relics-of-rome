@@ -848,6 +848,136 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .leaflet-control-zoom a{
     font-family:'Cinzel', serif !important;
   }
+
+  /* custom (user) marker */
+  .custom-pin{
+    width:26px; height:26px;
+    border-radius:50%;
+    background:#39506B;
+    border:2px solid var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 1px 4px rgba(0,0,0,0.35);
+    color:var(--gold);
+    font-size:13px;
+    line-height:1;
+  }
+
+  /* floating add-place button */
+  .fab{
+    position:fixed;
+    right:16px;
+    bottom:22px;
+    z-index:900;
+    background:var(--maroon);
+    color:var(--parchment);
+    border:1.5px solid var(--gold);
+    border-radius:999px;
+    font-family:'Cinzel', serif;
+    font-size:0.78rem;
+    letter-spacing:0.06em;
+    padding:10px 16px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.3);
+  }
+  .fab.placing{
+    background:var(--gold);
+    color:var(--maroon);
+  }
+
+  .placing-banner{
+    position:fixed;
+    top:8px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:900;
+    background:var(--maroon);
+    color:var(--parchment);
+    font-family:'Cinzel', serif;
+    font-size:0.7rem;
+    letter-spacing:0.08em;
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid var(--gold);
+    display:none;
+    white-space:nowrap;
+  }
+  .placing-banner.show{ display:block; }
+
+  /* add-place modal */
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(43,36,32,0.55);
+    z-index:2000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal-box{
+    background:var(--parchment);
+    border:1px solid var(--gold);
+    border-radius:8px;
+    width:88%;
+    max-width:340px;
+    padding:16px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+  }
+  .modal-box .card-eyebrow{ margin-bottom:8px; }
+  .modal-box label{
+    display:block;
+    font-family:'Cinzel', serif;
+    font-size:0.65rem;
+    letter-spacing:0.1em;
+    color:var(--maroon);
+    margin:10px 0 4px 0;
+  }
+  .modal-box input, .modal-box textarea{
+    width:100%;
+    font-family:'Crimson Text', serif;
+    font-size:0.95rem;
+    padding:7px 9px;
+    border:1px solid #c9bfa9;
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+    resize:vertical;
+  }
+  .modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:14px;
+  }
+  .modal-actions button{
+    font-family:'Cinzel', serif;
+    font-size:0.72rem;
+    letter-spacing:0.06em;
+    padding:8px 14px;
+    border-radius:5px;
+    cursor:pointer;
+    border:1.5px solid var(--maroon);
+    background:transparent;
+    color:var(--maroon);
+  }
+  .modal-actions button.primary{
+    background:var(--maroon);
+    color:var(--parchment);
+  }
+  .remove-link{
+    display:inline-block;
+    margin-top:4px;
+    font-family:'Cinzel', serif;
+    font-size:0.65rem;
+    letter-spacing:0.08em;
+    color:#39506B;
+    border:1px solid #39506B;
+    border-radius:4px;
+    padding:4px 8px;
+    background:none;
+    cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -865,6 +995,23 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 <div id="map"></div>
 
+<div class="placing-banner" id="placingBanner">Tap the map to drop your pin</div>
+<button class="fab" id="fabAdd">+ Add Place</button>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-box">
+    <div class="card-eyebrow">New Pin</div>
+    <label for="placeName">Name</label>
+    <input type="text" id="placeName" placeholder="e.g. Hotel Smeraldo" maxlength="60">
+    <label for="placeNote">Note (optional)</label>
+    <textarea id="placeNote" rows="2" placeholder="e.g. Our hotel, near Campo de' Fiori" maxlength="160"></textarea>
+    <div class="modal-actions">
+      <button id="modalCancel">Cancel</button>
+      <button class="primary" id="modalSave">Save Pin</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* @preserve
  * Leaflet 1.9.4, a JS library for interactive maps. https://leafletjs.com
@@ -877,9 +1024,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
   var sites = [
     {
       name: "St. Peter's Basilica",
-      relic: "Tomb of St. Peter the Apostle",
+      relic: "Tomb of St. Peter; Veil of Veronica; Lance of Longinus; tomb of St. John Paul II; bodies of Sts. John XXIII and Pius X",
       cat: "apostles",
-      note: "Beneath the high altar and Bernini's baldacchino lies the necropolis believed since antiquity to hold St. Peter's tomb. The Scavi tour descends to the excavated site itself.",
+      note: "Beneath the high altar and Bernini's baldacchino lies the necropolis believed since antiquity to hold St. Peter's tomb, reachable on the Scavi tour. The four piers of the crossing each enshrine a major relic: Veronica's veil, the lance of Longinus, a fragment of the True Cross, and a relic of St. Andrew. The Chapel of St. Sebastian holds the tomb of St. John Paul II, and side altars also hold the incorrupt bodies of Popes St. John XXIII and St. Pius X.",
       addr: "Piazza San Pietro, Vatican City",
       lat: 41.9022, lng: 12.4539
     },
@@ -962,6 +1109,318 @@ svg.leaflet-image-layer.leaflet-interactive path {
       note: "On Tiber Island, this church holds an ancient porphyry tub traditionally identified as the tomb of St. Bartholomew, and now also serves as a memorial to twentieth and twenty-first century martyrs.",
       addr: "Piazza di San Bartolomeo all'Isola 22",
       lat: 41.8917, lng: 12.4778
+    },
+    {
+      name: "San Paolo fuori le Mura",
+      relic: "Tomb of St. Paul the Apostle",
+      cat: "apostles",
+      note: "One of Rome's four major basilicas, built over the site where St. Paul was buried after his martyrdom. A small window beneath the altar lets visitors look down on the marked tomb itself.",
+      addr: "Piazzale San Paolo 1",
+      lat: 41.8584, lng: 12.4766
+    },
+    {
+      name: "Santi Apostoli",
+      relic: "Relics of Sts. Philip and James the Less",
+      cat: "apostles",
+      note: "A crypt beneath the altar of this basilica near the Trevi area holds the relics of two of the apostles, Philip and James the Less, brought to Rome in the sixth century.",
+      addr: "Piazza dei Santi Apostoli 51",
+      lat: 41.8967, lng: 12.4823
+    },
+    {
+      name: "Mamertine Prison (San Pietro in Carcere)",
+      relic: "Column where St. Peter was chained",
+      cat: "apostles",
+      note: "This ancient prison beneath the church of San Giuseppe dei Falegnami is venerated as the cell where Sts. Peter and Paul were held before their executions, with a column still marking the traditional spot.",
+      addr: "Clivo Argentario 1",
+      lat: 41.8930, lng: 12.4845
+    },
+    {
+      name: "Sant'Agnese fuori le Mura",
+      relic: "Tomb of St. Agnes",
+      cat: "saints",
+      note: "Above the catacombs that bear her name, this basilica preserves the tomb of the young martyr St. Agnes, with her relics venerated beneath the high altar amid striking early Christian mosaics.",
+      addr: "Via Nomentana 349",
+      lat: 41.9209, lng: 12.5283
+    },
+    {
+      name: "Sant'Agnese in Agone",
+      relic: "Skull relic of St. Agnes",
+      cat: "saints",
+      note: "On Piazza Navona, a side chapel of this Baroque church holds a reliquary said to contain the skull of St. Agnes, brought here from the catacombs on the Via Nomentana.",
+      addr: "Piazza Navona 30",
+      lat: 41.8989, lng: 12.4730
+    },
+    {
+      name: "San Sebastiano fuori le Mura",
+      relic: "Relics and column of St. Sebastian's martyrdom",
+      cat: "saints",
+      note: "Built over the catacombs where St. Sebastian was first buried, this church holds his relics along with the column to which he was bound when shot with arrows.",
+      addr: "Via Appia Antica 136",
+      lat: 41.8536, lng: 12.5217
+    },
+    {
+      name: "San Lorenzo fuori le Mura",
+      relic: "Relics of St. Lawrence",
+      cat: "saints",
+      note: "One of Rome's seven pilgrim churches, built over the catacombs where St. Lawrence was buried after his martyrdom on a gridiron, with his relics venerated in the crypt below the sanctuary.",
+      addr: "Piazzale del Verano 3",
+      lat: 41.9097, lng: 12.5223
+    },
+    {
+      name: "San Lorenzo in Lucina",
+      relic: "Fragment of the gridiron of St. Lawrence",
+      cat: "passion",
+      note: "Beneath the high altar, a small reliquary preserves part of the iron grill on which St. Lawrence is said to have been roasted alive, a relic that has drawn pilgrims here since the early Middle Ages.",
+      addr: "Piazza San Lorenzo in Lucina 18a",
+      lat: 41.9034, lng: 12.4778
+    },
+    {
+      name: "Chiesa Nuova (Santa Maria in Vallicella)",
+      relic: "Tomb of St. Philip Neri",
+      cat: "saints",
+      note: "A richly frescoed chapel to the left of the altar holds the body of St. Philip Neri, the sixteenth-century Roman priest known for his joyful holiness and founding of the Oratorians.",
+      addr: "Via del Governo Vecchio 134",
+      lat: 41.8959, lng: 12.4716
+    },
+    {
+      name: "Santa Pudenziana",
+      relic: "Table venerated as used by St. Peter",
+      cat: "apostles",
+      note: "Said to stand on the site of the house where St. Peter stayed and celebrated Mass during his time in Rome, with a fragment of wooden table from that house preserved in the Caetani Chapel.",
+      addr: "Via Urbana 160",
+      lat: 41.8983, lng: 12.4977
+    },
+    {
+      name: "Chiesa del Domine Quo Vadis",
+      relic: "Stone marked with Christ's footprints",
+      cat: "passion",
+      note: "Tradition holds that Christ appeared to St. Peter on this spot along the Appian Way, leaving his footprints in a stone now displayed inside this small wayside church.",
+      addr: "Via Appia Antica 51",
+      lat: 41.8530, lng: 12.5135
+    },
+    {
+      name: "San Marcello al Corso",
+      relic: "Miraculous crucifix relic",
+      cat: "passion",
+      note: "This church houses a wooden crucifix that survived a devastating fire in 1519 unscathed and was later carried through Rome during the plague of 1522, an event still commemorated each Good Friday.",
+      addr: "Via del Corso 437",
+      lat: 41.9008, lng: 12.4798
+    },
+    {
+      name: "Catacombe di San Callisto",
+      relic: "Crypt of the Popes",
+      cat: "saints",
+      note: "Among the largest and most important catacombs in Rome, this underground cemetery includes the Crypt of the Popes, where several third-century pontiffs were originally buried alongside many early martyrs.",
+      addr: "Via Appia Antica 110/126",
+      lat: 41.8482, lng: 12.5135
+    },
+    {
+      name: "Sant'Agostino",
+      relic: "Tomb of St. Monica",
+      cat: "saints",
+      note: "Near Piazza Navona, a side chapel holds the tomb of St. Monica, mother of St. Augustine, whose relics were brought to Rome from Ostia in the fifteenth century after centuries of obscurity.",
+      addr: "Piazza di Sant'Agostino 80",
+      lat: 41.8995, lng: 12.4747
+    },
+    {
+      name: "Santo Stefano Rotondo",
+      relic: "Relics of St. Stephen and Sts. Primus and Felician",
+      cat: "saints",
+      note: "This unusual circular basilica on the Caelian Hill holds relics traditionally associated with St. Stephen, the first martyr, along with those of the early martyrs Primus and Felician.",
+      addr: "Via di Santo Stefano Rotondo 7",
+      lat: 41.8845, lng: 12.4972
+    },
+    {
+      name: "Santa Maria in Cosmedin",
+      relic: "Skull relic of St. Valentine",
+      cat: "saints",
+      note: "Best known for the Mouth of Truth at its entrance, this ancient church also keeps a reliquary said to contain a skull of St. Valentine, one of several such relics venerated across Europe.",
+      addr: "Piazza della Bocca della Verit\u00e0 18",
+      lat: 41.8884, lng: 12.4814
+    },
+    {
+      name: "Santa Bibiana",
+      relic: "Relics of St. Bibiana and her scourging column",
+      cat: "saints",
+      note: "Bernini's first architectural commission houses the relics of St. Bibiana along with a column traditionally identified as the one to which she was bound and beaten before her martyrdom.",
+      addr: "Via Giovanni Giolitti 154",
+      lat: 41.8957, lng: 12.5163
+    },
+    {
+      name: "Santi Cosma e Damiano",
+      relic: "Relics of Sts. Cosmas and Damian",
+      cat: "saints",
+      note: "Set within the Roman Forum, this sixth-century church holds the relics of the twin physician-saints Cosmas and Damian, early martyrs venerated as patrons of doctors and surgeons.",
+      addr: "Via dei Fori Imperiali 1",
+      lat: 41.8924, lng: 12.4878
+    },
+    {
+      name: "Santa Francesca Romana",
+      relic: "Body of St. Frances of Rome",
+      cat: "saints",
+      note: "Overlooking the Roman Forum, the crypt of this church holds the body of St. Frances of Rome, a fifteenth-century noblewoman known for her visions and her care for Rome's poor.",
+      addr: "Piazza di Santa Francesca Romana 4",
+      lat: 41.8908, lng: 12.4878
+    },
+    {
+      name: "Santi Bonifacio e Alessio",
+      relic: "Relics of St. Alexis and the staircase of his cell",
+      cat: "saints",
+      note: "On the Aventine Hill, this church preserves the relics of St. Alexis along with a wooden staircase venerated as the one beneath which he is said to have lived unrecognized in his own family's home.",
+      addr: "Piazza di Sant'Alessio 23",
+      lat: 41.8842, lng: 12.4823
+    },
+    {
+      name: "Santi Nereo e Achilleo",
+      relic: "Relics of Sts. Nereus and Achilleus; fragment of the Column of the Flagellation",
+      cat: "passion",
+      note: "Near the Baths of Caracalla, this ancient titular church holds the relics of the martyred soldiers Nereus and Achilleus, along with a fragment said to come from the column of Christ's scourging.",
+      addr: "Viale delle Terme di Caracalla 26",
+      lat: 41.8723, lng: 12.4934
+    },
+    {
+      name: "San Crisogono",
+      relic: "Relic of the True Cross",
+      cat: "passion",
+      note: "One of the oldest titular churches in Trastevere, San Crisogono preserves a fragment venerated as a relic of the True Cross within its richly decorated Baroque interior.",
+      addr: "Piazza Sonnino 44",
+      lat: 41.8884, lng: 12.4716
+    },
+    {
+      name: "Sant'Ignazio di Loyola",
+      relic: "Relics of St. Robert Bellarmine and St. John Berchmans",
+      cat: "saints",
+      note: "Beside the church of the Roman College, side altars hold the relics of two Jesuit saints: Cardinal Robert Bellarmine, the great Counter-Reformation theologian, and the young Belgian seminarian John Berchmans.",
+      addr: "Via del Caravita 8a",
+      lat: 41.8985, lng: 12.4800
+    },
+    {
+      name: "Santi Ambrogio e Carlo al Corso",
+      relic: "Heart relic of St. Charles Borromeo",
+      cat: "saints",
+      note: "Built as the Milanese national church in Rome, this basilica preserves a relic of the heart of St. Charles Borromeo, the reforming Archbishop of Milan, in an urn within the sanctuary.",
+      addr: "Via del Corso 437",
+      lat: 41.9018, lng: 12.4795
+    },
+    {
+      name: "Abbazia delle Tre Fontane",
+      relic: "Site of St. Paul's beheading",
+      cat: "saints",
+      note: "According to tradition, St. Paul was beheaded on this spot, his head striking the ground three times and causing a spring to rise at each point, the 'three fountains' that give this Trappist abbey its name.",
+      addr: "Via Laurentina 96",
+      lat: 41.8270, lng: 12.4750
+    },
+    {
+      name: "San Giovanni in Oleo",
+      relic: "Site of St. John the Evangelist's martyrdom attempt",
+      cat: "passion",
+      note: "This small Renaissance chapel near the Latin Gate marks the traditional spot where St. John the Evangelist was plunged into a cauldron of boiling oil and emerged unharmed.",
+      addr: "Via di Porta Latina 17",
+      lat: 41.8775, lng: 12.4990
+    },
+    {
+      name: "Sant'Anastasia al Palatino",
+      relic: "Relics of St. Anastasia of Sirmium",
+      cat: "saints",
+      note: "Tucked beneath the Palatine Hill near the Circus Maximus, this ancient titular church holds the relics of St. Anastasia, a fourth-century martyr venerated since the early days of the Roman church.",
+      addr: "Piazza di Sant'Anastasia 1",
+      lat: 41.8893, lng: 12.4853
+    },
+    {
+      name: "Santi Quattro Coronati",
+      relic: "Relics of the Four Crowned Martyrs",
+      cat: "saints",
+      note: "Behind fortress-like walls near the Colosseum, the crypt of this monastery church holds the relics of the Quattro Coronati, a group of early Roman martyrs venerated together since antiquity.",
+      addr: "Via dei Santi Quattro 20",
+      lat: 41.8893, lng: 12.4965
+    },
+    {
+      name: "Sant'Eustachio",
+      relic: "Skull relic of St. Eustace",
+      cat: "saints",
+      note: "Near the Pantheon, this ancient church is dedicated to St. Eustace, a Roman general martyred with his family, and holds a reliquary said to contain his skull.",
+      addr: "Piazza di Sant'Eustachio 78",
+      lat: 41.8985, lng: 12.4765
+    },
+    {
+      name: "Santa Susanna",
+      relic: "Relics of St. Susanna",
+      cat: "saints",
+      note: "One of Rome's oldest titular churches, Santa Susanna preserves the relics of the virgin martyr Susanna beneath its altar, on a site believed to be her family home.",
+      addr: "Via XX Settembre 14",
+      lat: 41.9048, lng: 12.4934
+    },
+    {
+      name: "San Saba",
+      relic: "Relics associated with St. Sabas",
+      cat: "saints",
+      note: "On the Piccolo Aventino, this church grew from a monastery founded by monks fleeing the Holy Land, who brought with them relics and devotion to St. Sabas, the great desert monastic founder.",
+      addr: "Piazza Bernardo Bernardini 1",
+      lat: 41.8745, lng: 12.4915
+    },
+    {
+      name: "Santi Giovanni e Paolo",
+      relic: "Relics of Sts. John and Paul, Roman martyrs",
+      cat: "saints",
+      note: "On the Caelian Hill, this basilica holds the relics of the soldier-martyrs John and Paul, beneath which excavations have revealed the Roman houses where they are said to have lived and died.",
+      addr: "Piazza dei Santi Giovanni e Paolo 13",
+      lat: 41.8884, lng: 12.4933
+    },
+    {
+      name: "Sant'Onofrio",
+      relic: "Relic of St. Onuphrius",
+      cat: "saints",
+      note: "On the Janiculum Hill, this small Hieronymite monastery church holds a relic of St. Onuphrius, the fourth-century Egyptian desert hermit for whom it is named.",
+      addr: "Piazza di Sant'Onofrio 2",
+      lat: 41.8983, lng: 12.4620
+    },
+    {
+      name: "San Pancrazio fuori le Mura",
+      relic: "Relics of St. Pancras",
+      cat: "saints",
+      note: "Built above catacombs on the old Via Aurelia, this basilica holds the relics of St. Pancras, a boy martyred at about fourteen years old, long venerated as a patron of children and oath-takers.",
+      addr: "Piazza di San Pancrazio 5",
+      lat: 41.8895, lng: 12.4500
+    },
+    {
+      name: "Sant'Eusebio all'Esquilino",
+      relic: "Relics of St. Eusebius",
+      cat: "saints",
+      note: "Near Piazza Vittorio, this ancient titular church on the Esquiline Hill holds the relics of St. Eusebius, a fourth-century Roman priest venerated as a martyr under Constantius II.",
+      addr: "Piazza Vittorio Emanuele II 12a",
+      lat: 41.8958, lng: 12.5040
+    },
+    {
+      name: "San Giorgio in Velabro",
+      relic: "Skull relic of St. George",
+      cat: "saints",
+      note: "Near the Arch of Janus, this ancient diaconal church holds a reliquary said to contain the skull of St. George, the soldier-martyr venerated across both the Western and Eastern churches.",
+      addr: "Via del Velabro 19",
+      lat: 41.8896, lng: 12.4818
+    },
+    {
+      name: "Sant'Andrea al Quirinale",
+      relic: "Heart relic of St. Stanislaus Kostka",
+      cat: "saints",
+      note: "This small Bernini-designed church served the Jesuit novitiate where St. Stanislaus Kostka died as a young novice, and preserves a relic of his heart near the room in which he died.",
+      addr: "Via del Quirinale 29",
+      lat: 41.9018, lng: 12.4878
+    },
+    {
+      name: "Santa Maria in Aracoeli",
+      relic: "The Santo Bambino",
+      cat: "marian",
+      note: "Atop the Capitoline Hill, this church is home to the Santo Bambino, a small carved figure of the Christ Child long venerated for answering prayers, especially from Roman children at Christmas.",
+      addr: "Piazza del Campidoglio 4",
+      lat: 41.8932, lng: 12.4830
+    },
+    {
+      name: "San Pietro in Montorio",
+      relic: "Traditional site of St. Peter's crucifixion",
+      cat: "apostles",
+      note: "On the Janiculum Hill, Bramante's Tempietto marks the spot where, by long tradition, St. Peter was crucified upside down, a few steps from the church that bears his name.",
+      addr: "Piazza di San Pietro in Montorio 2",
+      lat: 41.8889, lng: 12.4651
     }
   ];
 
@@ -970,7 +1429,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     { key: "apostles", label: "Apostles" },
     { key: "passion", label: "Passion Relics" },
     { key: "marian", label: "Marian / Nativity" },
-    { key: "saints", label: "Saints' Tombs" }
+    { key: "saints", label: "Saints' Tombs" },
+    { key: "mine", label: "My Places" }
   ];
 
   var activeCat = "all";
@@ -1044,7 +1504,140 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   setTimeout(function(){ map.invalidateSize(); }, 300);
   window.addEventListener('resize', function(){ map.invalidateSize(); });
-</script>
 
+  /* ---- Custom "My Places" pins ---- */
+
+  var STORAGE_KEY = 'appaday038-places';
+  var customPlaces = [];
+  try {
+    var rawSaved = localStorage.getItem(STORAGE_KEY);
+    if (rawSaved) { customPlaces = JSON.parse(rawSaved); }
+  } catch (e) { customPlaces = []; }
+
+  function saveCustomPlaces(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customPlaces));
+    } catch (e) { /* ignore, in-memory only this session */ }
+  }
+
+  function customIcon(){
+    return L.divIcon({
+      className: '',
+      html: '<div class="custom-pin">&#8962;</div>',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -10]
+    });
+  }
+
+  function customPopupHtml(place){
+    var html = '';
+    html += '<div class="card-eyebrow">My Place</div>';
+    html += '<div class="card-title">' + place.name + '</div>';
+    if (place.note) {
+      html += '<div class="card-note">' + place.note + '</div>';
+    }
+    html += '<button class="remove-link" data-id="' + place.id + '">Remove pin</button>';
+    return html;
+  }
+
+  function addCustomMarker(place){
+    var m = L.marker([place.lat, place.lng], { icon: customIcon() }).addTo(map);
+    m.bindPopup(customPopupHtml(place));
+    m.siteCat = 'mine';
+    m.placeId = place.id;
+    m.on('popupopen', function(e){
+      var btn = e.popup.getElement().querySelector('.remove-link');
+      if (btn) {
+        btn.addEventListener('click', function(){
+          removeCustomPlace(place.id, m);
+        });
+      }
+    });
+    markers.push(m);
+    if (activeCat !== 'all' && activeCat !== 'mine') {
+      map.removeLayer(m);
+    }
+    return m;
+  }
+
+  function removeCustomPlace(id, marker){
+    for (var i = 0; i < customPlaces.length; i++) {
+      if (customPlaces[i].id === id) { customPlaces.splice(i, 1); break; }
+    }
+    saveCustomPlaces();
+    map.closePopup();
+    map.removeLayer(marker);
+    for (var j = 0; j < markers.length; j++) {
+      if (markers[j] === marker) { markers.splice(j, 1); break; }
+    }
+  }
+
+  for (var p = 0; p < customPlaces.length; p++) {
+    addCustomMarker(customPlaces[p]);
+  }
+
+  /* ---- Add-place flow: FAB, map tap, modal ---- */
+
+  var addMode = false;
+  var pendingLatLng = null;
+  var fab = document.getElementById('fabAdd');
+  var banner = document.getElementById('placingBanner');
+  var backdrop = document.getElementById('modalBackdrop');
+  var nameInput = document.getElementById('placeName');
+  var noteInput = document.getElementById('placeNote');
+
+  fab.addEventListener('click', function(){
+    addMode = !addMode;
+    if (addMode) {
+      fab.classList.add('placing');
+      fab.textContent = 'Cancel';
+      banner.classList.add('show');
+    } else {
+      fab.classList.remove('placing');
+      fab.textContent = '+ Add Place';
+      banner.classList.remove('show');
+    }
+  });
+
+  map.on('click', function(e){
+    if (!addMode) { return; }
+    pendingLatLng = e.latlng;
+    addMode = false;
+    fab.classList.remove('placing');
+    fab.textContent = '+ Add Place';
+    banner.classList.remove('show');
+    nameInput.value = '';
+    noteInput.value = '';
+    backdrop.classList.add('show');
+    setTimeout(function(){ nameInput.focus(); }, 200);
+  });
+
+  document.getElementById('modalCancel').addEventListener('click', function(){
+    backdrop.classList.remove('show');
+    pendingLatLng = null;
+  });
+
+  document.getElementById('modalSave').addEventListener('click', function(){
+    var name = nameInput.value.replace(/^\s+|\s+$/g, '');
+    if (!name || !pendingLatLng) {
+      backdrop.classList.remove('show');
+      pendingLatLng = null;
+      return;
+    }
+    var place = {
+      id: 'p' + Date.now(),
+      name: name,
+      note: noteInput.value.replace(/^\s+|\s+$/g, ''),
+      lat: pendingLatLng.lat,
+      lng: pendingLatLng.lng
+    };
+    customPlaces.push(place);
+    saveCustomPlaces();
+    addCustomMarker(place);
+    backdrop.classList.remove('show');
+    pendingLatLng = null;
+  });
+</script>
 </body>
 </html>
